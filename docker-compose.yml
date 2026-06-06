@@ -1,0 +1,92 @@
+version: "3.8"
+
+# ============================================================
+#  Ollama + Open WebUI + OpenRouter Stack
+#  Kommuniverse Setup – github.com/kommuniverse
+# ============================================================
+
+services:
+
+  # -----------------------------------------------------------
+  # OLLAMA – lokaler LLM-Server
+  # -----------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_NUM_PARALLEL=2
+    # GPU-Support: Auskommentieren wenn NVIDIA-GPU vorhanden
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # -----------------------------------------------------------
+  # OPEN WEBUI – grafisches Interface
+  # -----------------------------------------------------------
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    volumes:
+      - open_webui_data:/app/backend/data
+    environment:
+      # Ollama intern über Docker-Netzwerk
+      - OLLAMA_BASE_URL=http://ollama:11434
+      # OpenAI-kompatible APIs (OpenRouter, Claude, etc.)
+      - OPENAI_API_BASE_URL=https://openrouter.ai/api/v1
+      # OpenRouter API Key – hier eintragen oder in .env setzen
+      - OPENAI_API_KEY=${OPENROUTER_API_KEY:-dein-openrouter-api-key-hier}
+      # Weitere API-Endpunkte (kommagetrennt für mehrere)
+      # - OPENAI_API_BASE_URLS=https://openrouter.ai/api/v1;https://api.anthropic.com/v1
+      # Sicherheit
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-change-me-secret-key-12345}
+      - WEBUI_AUTH=true
+      # Performance
+      - RAG_EMBEDDING_ENGINE=ollama
+      - RAG_OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  # -----------------------------------------------------------
+  # OLLAMA MODEL PULLER – lädt Standard-Modelle beim Start
+  # -----------------------------------------------------------
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: ollama-init
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "
+        echo '=== Lade Standard-Modelle ===' &&
+        curl -s http://ollama:11434/api/pull -d '{\"name\":\"llama3.2:3b\"}' &&
+        echo 'llama3.2:3b geladen' &&
+        curl -s http://ollama:11434/api/pull -d '{\"name\":\"mistral:7b\"}' &&
+        echo 'mistral:7b geladen' &&
+        echo '=== Modelle bereit ==='
+      "
+
+volumes:
+  ollama_data:
+    name: ollama_data
+  open_webui_data:
+    name: open_webui_data
