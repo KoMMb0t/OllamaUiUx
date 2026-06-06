@@ -1,0 +1,106 @@
+version: "3.8"
+
+# ============================================================
+#  Self-Hosted GitLab CE + Runner + Registry
+#  Kommuniverse Setup
+#  Docs: https://docs.gitlab.com/install/docker/
+# ============================================================
+#
+#  VORAUSSETZUNGEN:
+#    - Mindestens 4 GB RAM (8 GB empfohlen)
+#    - Mindestens 4 CPU-Kerne
+#    - Mindestens 40 GB freier Speicherplatz
+#    - .env Datei mit GITLAB_HOSTNAME gesetzt
+#
+#  STARTEN:
+#    docker compose up -d
+#
+#  ERSTES PASSWORT:
+#    docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
+# ============================================================
+
+services:
+
+  # -----------------------------------------------------------
+  # GITLAB CE – Hauptanwendung
+  # -----------------------------------------------------------
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    restart: unless-stopped
+    hostname: "${GITLAB_HOSTNAME:-gitlab.local}"
+    ports:
+      - "${GITLAB_HTTP_PORT:-8929}:80"       # Web-Interface
+      - "${GITLAB_HTTPS_PORT:-8443}:443"     # HTTPS (optional)
+      - "${GITLAB_SSH_PORT:-2222}:22"        # Git over SSH
+    volumes:
+      - gitlab_config:/etc/gitlab
+      - gitlab_logs:/var/log/gitlab
+      - gitlab_data:/var/opt/gitlab
+    shm_size: "256m"
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        # ── Extern erreichbare URL ──────────────────────────
+        external_url 'http://${GITLAB_HOSTNAME:-gitlab.local}:${GITLAB_HTTP_PORT:-8929}'
+
+        # ── SSH Port ────────────────────────────────────────
+        gitlab_rails['gitlab_shell_ssh_port'] = ${GITLAB_SSH_PORT:-2222}
+
+        # ── E-Mail (optional, für Benachrichtigungen) ───────
+        # gitlab_rails['smtp_enable'] = true
+        # gitlab_rails['smtp_address'] = "smtp.gmail.com"
+        # gitlab_rails['smtp_port'] = 587
+        # gitlab_rails['smtp_user_name'] = "deine@gmail.com"
+        # gitlab_rails['smtp_password'] = "app-passwort"
+        # gitlab_rails['smtp_domain'] = "gmail.com"
+        # gitlab_rails['smtp_authentication'] = "plain"
+        # gitlab_rails['smtp_enable_starttls_auto'] = true
+        # gitlab_rails['gitlab_email_from'] = 'deine@gmail.com'
+
+        # ── Performance Optimierungen (für wenig RAM) ───────
+        # Für 4 GB RAM: folgende Zeilen einkommentieren
+        # puma['worker_processes'] = 2
+        # sidekiq['concurrency'] = 5
+        # postgresql['shared_buffers'] = "256MB"
+        # postgresql['max_connections'] = 100
+        # prometheus_monitoring['enable'] = false
+
+        # ── Container Registry (für Docker Images) ──────────
+        # registry_external_url 'http://${GITLAB_HOSTNAME:-gitlab.local}:5050'
+        # registry['enable'] = true
+
+        # ── GitLab Pages (für statische Websites) ───────────
+        # pages_external_url 'http://pages.${GITLAB_HOSTNAME:-gitlab.local}'
+        # gitlab_pages['enable'] = true
+
+        # ── Backups ─────────────────────────────────────────
+        gitlab_rails['backup_keep_time'] = 604800  # 7 Tage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/-/health"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+      start_period: 300s   # GitLab braucht ~5 Min beim ersten Start
+
+  # -----------------------------------------------------------
+  # GITLAB RUNNER – für CI/CD Pipelines
+  # -----------------------------------------------------------
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
+    restart: unless-stopped
+    volumes:
+      - gitlab_runner_config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker-in-Docker
+    depends_on:
+      - gitlab
+
+volumes:
+  gitlab_config:
+    name: gitlab_config
+  gitlab_logs:
+    name: gitlab_logs
+  gitlab_data:
+    name: gitlab_data
+  gitlab_runner_config:
+    name: gitlab_runner_config
