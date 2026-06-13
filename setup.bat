@@ -289,20 +289,88 @@ powershell -Command ^
 echo  %GRN%[OK]%NC%   Verknüpfung: "KI Stack starten" (Desktop)
 
 :: ============================================================
-:: FERTIG
+:: FERTIG – Statusprüfung
 :: ============================================================
 echo.
+echo  %BLU%Führe finale Statusprüfung durch...%NC%
+echo.
+
+:: Ollama API prüfen
+set CHECK_OLLAMA=0
+curl -sf http://localhost:11434/api/tags >nul 2>&1
+if !errorlevel!==0 set CHECK_OLLAMA=1
+
+:: Open WebUI prüfen
+set CHECK_WEBUI=0
+curl -sf http://localhost:3000 >nul 2>&1
+if !errorlevel!==0 set CHECK_WEBUI=1
+
+:: Chatbox prüfen
+set CHECK_CHATBOX=0
+if exist "%LOCALAPPDATA%\Programs\Chatbox AI\Chatbox AI.exe" set CHECK_CHATBOX=1
+
+:: Chatbox-Konfiguration prüfen
+set CHECK_CONFIG=0
+if exist "%APPDATA%\Chatbox AI\data\settings.json" (
+    powershell -Command "if ((Get-Content '%APPDATA%\Chatbox AI\data\settings.json' -Raw) -match 'localhost:11434') { exit 0 } else { exit 1 }" >nul 2>&1
+    if !errorlevel!==0 set CHECK_CONFIG=1
+)
+
+:: Desktop-Verknüpfungen prüfen
+set CHECK_LINKS=0
+if exist "%USERPROFILE%\Desktop\Open WebUI.lnk" set CHECK_LINKS=1
+
 echo  %GRN%============================================================%NC%
-echo  %GRN%   SETUP ABGESCHLOSSEN!%NC%
+echo  %GRN%   SETUP-CHECKLISTE%NC%
 echo  %GRN%============================================================%NC%
 echo.
-echo   %CYN%Zugänge:%NC%
-echo    Open WebUI (Browser):  http://localhost:3000
-echo    Ollama API:            http://localhost:11434
+
+if !CHECK_OLLAMA!==1 (
+    echo   %GRN%[✓]%NC% Ollama API läuft        → http://localhost:11434
+) else (
+    echo   %RED%[✗]%NC% Ollama API NICHT erreichbar
+    echo       Prüfe mit: docker compose logs ollama
+)
+
+if !CHECK_WEBUI!==1 (
+    echo   %GRN%[✓]%NC% Open WebUI läuft        → http://localhost:3000
+) else (
+    echo   %RED%[✗]%NC% Open WebUI NICHT erreichbar
+    echo       Prüfe mit: docker compose logs open-webui
+)
+
+if !CHECK_CHATBOX!==1 (
+    echo   %GRN%[✓]%NC% Chatbox AI installiert
+) else (
+    echo   %YLW%[!]%NC% Chatbox AI nicht gefunden → manuell: https://chatboxai.app/
+)
+
+if !CHECK_CONFIG!==1 (
+    echo   %GRN%[✓]%NC% Chatbox mit Ollama verbunden (localhost:11434)
+) else (
+    echo   %YLW%[!]%NC% Chatbox-Konfiguration fehlt
+    echo       Manuell: Chatbox → Einstellungen → AI Provider → Ollama
+    echo       Ollama Host: http://localhost:11434
+)
+
+if !CHECK_LINKS!==1 (
+    echo   %GRN%[✓]%NC% Desktop-Verknüpfungen erstellt
+) else (
+    echo   %YLW%[!]%NC% Desktop-Verknüpfungen fehlen
+)
+
 echo.
-echo   %CYN%Desktop Apps:%NC%
-echo    Chatbox AI   → bereits mit Ollama (localhost:11434) verbunden
-echo    Open WebUI   → Desktop-Verknüpfung auf dem Desktop
+
+:: Gesamtstatus
+set /a TOTAL=CHECK_OLLAMA+CHECK_WEBUI+CHECK_CHATBOX+CHECK_CONFIG+CHECK_LINKS
+if !TOTAL!==5 (
+    echo   %GRN%► Alles erfolgreich! Setup vollständig abgeschlossen.%NC%
+) else if !TOTAL! geq 3 (
+    echo   %YLW%► Teilweise erfolgreich ^(!TOTAL!/5^). Siehe Hinweise oben.%NC%
+) else (
+    echo   %RED%► Fehler aufgetreten ^(!TOTAL!/5^). Bitte Hinweise oben beachten.%NC%
+)
+
 echo.
 echo   %CYN%Erste Schritte:%NC%
 echo    1. http://localhost:3000 öffnen
