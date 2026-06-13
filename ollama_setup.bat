@@ -101,7 +101,7 @@ if not exist ".env" (
     )
 
     :: Zufaelligen Secret Key generieren
-    for /f "delims=" %%i in ('powershell -Command "[System.Guid]::NewGuid().ToString('N') + [System.Guid]::NewGuid().ToString('N')"') do set NEWKEY=%%i
+    for /f "delims=" %%i in ('powershell -Command "[System.Guid]::NewGuid().ToString()"') do set NEWKEY=%%i
     powershell -Command "(Get-Content .env) -replace 'mein-geheimer-schluessel-bitte-aendern', '!NEWKEY!' | Set-Content .env -Encoding UTF8"
     echo  %GRN%[OK]%NC%   Sicherheitsschluessel generiert
 ) else (
