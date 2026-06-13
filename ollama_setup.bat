@@ -23,12 +23,12 @@ echo  %CYN%============================================================%NC%
 echo.
 
 :: ============================================================
-:: SCHRITT 1: Voraussetzungen prüfen
+:: SCHRITT 1: Voraussetzungen pruefen
 :: ============================================================
-echo  %BLU%[1/6]%NC% Prüfe Voraussetzungen...
+echo  %BLU%[1/6]%NC% Pruefe Voraussetzungen...
 echo.
 
-:: Docker prüfen
+:: Docker pruefen
 docker --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo  %RED%[FEHLER]%NC% Docker nicht gefunden!
@@ -44,10 +44,10 @@ if %errorlevel% neq 0 (
 )
 echo  %GRN%[OK]%NC%   Docker gefunden
 
-:: Docker Desktop läuft?
+:: Docker Desktop laeuft?
 docker info >nul 2>&1
 if %errorlevel% neq 0 (
-    echo  %YLW%[WARTEN]%NC% Docker Desktop läuft noch nicht – versuche zu starten...
+    echo  %YLW%[WARTEN]%NC% Docker Desktop laeuft noch nicht -- versuche zu starten...
     start "" "C:\Program Files\Docker\Docker\Docker Desktop.exe" >nul 2>&1
     echo         Warte 20 Sekunden auf Docker Desktop...
     timeout /t 20 /nobreak >nul
@@ -58,9 +58,9 @@ if %errorlevel% neq 0 (
         pause & exit /b 1
     )
 )
-echo  %GRN%[OK]%NC%   Docker Desktop läuft
+echo  %GRN%[OK]%NC%   Docker Desktop laeuft
 
-:: Docker Compose prüfen (v1 und v2 kompatibel)
+:: Docker Compose pruefen (v1 und v2 kompatibel)
 docker-compose --version >nul 2>&1
 set COMPOSE_OK=!errorlevel!
 if !COMPOSE_OK! neq 0 (
@@ -84,12 +84,12 @@ echo.
 if not exist ".env" (
     copy ".env.example" ".env" >nul
 
-    echo  ┌─────────────────────────────────────────────────────┐
-    echo  │  OPTIONAL: OpenRouter API Key eingeben              │
-    echo  │  Ermöglicht Cloud-Modelle: Claude, GPT-4o, Gemini  │
-    echo  │  Kostenlos registrieren: https://openrouter.ai/keys │
-    echo  │  (Enter drücken zum Überspringen)                   │
-    echo  └─────────────────────────────────────────────────────┘
+    echo  +-----------------------------------------------------+
+    echo  ^|  OPTIONAL: OpenRouter API Key eingeben              ^|
+    echo  ^|  Cloud-Modelle: Claude, GPT-4o, Gemini             ^|
+    echo  ^|  Kostenlos: https://openrouter.ai/keys              ^|
+    echo  ^|  (Enter druecken zum Ueberspringen)                 ^|
+    echo  +-----------------------------------------------------+
     echo.
     set /p ORKEY="  OpenRouter API Key: "
 
@@ -97,13 +97,13 @@ if not exist ".env" (
         powershell -Command "(Get-Content .env) -replace 'sk-or-xxxxxxxxxxxxxxxxxxxx', '!ORKEY!' | Set-Content .env -Encoding UTF8"
         echo  %GRN%[OK]%NC%   OpenRouter API Key gespeichert
     ) else (
-        echo  %YLW%[SKIP]%NC% Kein API Key – nur lokale Modelle verfügbar
+        echo  %YLW%[SKIP]%NC% Kein API Key -- nur lokale Modelle verfuegbar
     )
 
-    :: Zufälligen Secret Key generieren
+    :: Zufaelligen Secret Key generieren
     for /f "delims=" %%i in ('powershell -Command "[System.Guid]::NewGuid().ToString('N') + [System.Guid]::NewGuid().ToString('N')"') do set NEWKEY=%%i
     powershell -Command "(Get-Content .env) -replace 'mein-geheimer-schluessel-bitte-aendern', '!NEWKEY!' | Set-Content .env -Encoding UTF8"
-    echo  %GRN%[OK]%NC%   Sicherheitsschlüssel generiert
+    echo  %GRN%[OK]%NC%   Sicherheitsschluessel generiert
 ) else (
     echo  %GRN%[OK]%NC%   .env bereits vorhanden
 )
@@ -120,8 +120,8 @@ docker compose up -d --pull always
 if %errorlevel% neq 0 (
     echo.
     echo  %RED%[FEHLER]%NC% Docker Compose fehlgeschlagen!
-    echo         Prüfe die Ausgabe oben auf Fehler.
-    echo         Häufige Ursache: Port 3000 oder 11434 bereits belegt.
+    echo         Pruefe die Ausgabe oben auf Fehler.
+    echo         Haeufige Ursache: Port 3000 oder 11434 bereits belegt.
     pause & exit /b 1
 )
 echo.
@@ -151,8 +151,8 @@ for /l %%i in (1,1,18) do (
 
 if !READY!==0 (
     echo  %YLW%[HINWEIS]%NC% Open WebUI noch nicht erreichbar.
-    echo            Möglicherweise läuft der Download noch im Hintergrund.
-    echo            Prüfe: docker compose logs -f
+    echo            Moeglicherweise laeuft der Download noch im Hintergrund.
+    echo            Pruefe: docker compose logs -f
 )
 echo.
 
@@ -165,13 +165,13 @@ echo.
 set CHATBOX_INSTALLED=0
 set CHATBOX_CONFIG_DIR=%APPDATA%\Chatbox AI
 
-:: Prüfen ob Chatbox bereits installiert ist
+:: Pruefen ob Chatbox bereits installiert ist
 where /q chatbox >nul 2>&1 && set CHATBOX_INSTALLED=1
 if exist "%LOCALAPPDATA%\Programs\Chatbox AI\Chatbox AI.exe" set CHATBOX_INSTALLED=1
 if exist "%PROGRAMFILES%\Chatbox AI\Chatbox AI.exe" set CHATBOX_INSTALLED=1
 
 if !CHATBOX_INSTALLED!==0 (
-    echo  Chatbox nicht gefunden – starte Installation...
+    echo  Chatbox nicht gefunden -- starte Installation...
     echo.
 
     :: Versuche winget (Windows 11 / aktuelles Win10)
@@ -203,7 +203,7 @@ if !CHATBOX_INSTALLED!==0 (
         )
     )
 
-    :: Letzter Fallback: Browser öffnen
+    :: Letzter Fallback: Browser oeffnen
     if !CHATBOX_INSTALLED!==0 (
         echo  %YLW%[MANUELL]%NC% Bitte Chatbox manuell installieren:
         echo             https://chatboxai.app/
@@ -228,9 +228,9 @@ if not exist "%APPDATA%\Chatbox AI\data" (
     mkdir "%APPDATA%\Chatbox AI\data" >nul 2>&1
 )
 
-:: Prüfen ob settings.json bereits existiert
+:: Pruefen ob settings.json bereits existiert
 if exist "%CHATBOX_SETTINGS%" (
-    :: Vorhandene Einstellungen: Ollama-URL patchen ohne andere Werte zu überschreiben
+    :: Vorhandene Einstellungen: Ollama-URL patchen ohne andere Werte zu ueberschreiben
     powershell -Command ^
         "$s = Get-Content '%CHATBOX_SETTINGS%' -Raw | ConvertFrom-Json;" ^
         "if (-not $s.PSObject.Properties['ollamaHost']) { $s | Add-Member -NotePropertyName 'ollamaHost' -NotePropertyValue 'http://localhost:11434' } else { $s.ollamaHost = 'http://localhost:11434' };" ^
@@ -254,35 +254,35 @@ if exist "%CHATBOX_SETTINGS%" (
 )
 
 :: ============================================================
-:: SCHRITT 6: Desktop-Verknüpfungen erstellen
+:: SCHRITT 6: Desktop-Verknuepfungen erstellen
 :: ============================================================
 echo.
-echo  %BLU%[6/6]%NC% Erstelle Desktop-Verknüpfungen...
+echo  %BLU%[6/6]%NC% Erstelle Desktop-Verknuepfungen...
 echo.
 
-:: Open WebUI Verknüpfung
+:: Open WebUI Verknuepfung
 powershell -Command ^
     "$ws = New-Object -ComObject WScript.Shell;" ^
     "$sc = $ws.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\Open WebUI.lnk');" ^
     "$sc.TargetPath = 'C:\Windows\explorer.exe';" ^
     "$sc.Arguments = 'http://localhost:3000';" ^
-    "$sc.Description = 'Open WebUI – Lokales KI Interface';" ^
+    "$sc.Description = 'Open WebUI -- Lokales KI Interface';" ^
     "$sc.IconLocation = 'C:\Windows\System32\shell32.dll,14';" ^
     "$sc.Save()" >nul 2>&1
-echo  %GRN%[OK]%NC%   Verknüpfung: "Open WebUI" (Desktop)
+echo  %GRN%[OK]%NC%   Verknuepfung: "Open WebUI" (Desktop)
 
-:: Chatbox Verknüpfung (falls installiert)
+:: Chatbox Verknuepfung (falls installiert)
 if exist "%LOCALAPPDATA%\Programs\Chatbox AI\Chatbox AI.exe" (
     powershell -Command ^
         "$ws = New-Object -ComObject WScript.Shell;" ^
         "$sc = $ws.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\Chatbox AI.lnk');" ^
         "$sc.TargetPath = '%LOCALAPPDATA%\Programs\Chatbox AI\Chatbox AI.exe';" ^
-        "$sc.Description = 'Chatbox AI – Desktop Client für Ollama';" ^
+        "$sc.Description = 'Chatbox AI -- Desktop Client fuer Ollama';" ^
         "$sc.Save()" >nul 2>&1
-    echo  %GRN%[OK]%NC%   Verknüpfung: "Chatbox AI" (Desktop)
+    echo  %GRN%[OK]%NC%   Verknuepfung: "Chatbox AI" (Desktop)
 )
 
-:: KI Stack starten Verknüpfung
+:: KI Stack starten Verknuepfung
 powershell -Command ^
     "$ws = New-Object -ComObject WScript.Shell;" ^
     "$sc = $ws.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\KI Stack starten.lnk');" ^
@@ -291,37 +291,37 @@ powershell -Command ^
     "$sc.Description = 'Ollama + Open WebUI starten';" ^
     "$sc.IconLocation = 'C:\Windows\System32\shell32.dll,137';" ^
     "$sc.Save()" >nul 2>&1
-echo  %GRN%[OK]%NC%   Verknüpfung: "KI Stack starten" (Desktop)
+echo  %GRN%[OK]%NC%   Verknuepfung: "KI Stack starten" (Desktop)
 
 :: ============================================================
-:: FERTIG – Statusprüfung
+:: FERTIG -- Statuspruefung
 :: ============================================================
 echo.
-echo  %BLU%Führe finale Statusprüfung durch...%NC%
+echo  %BLU%Fuehre finale Statuspruefung durch...%NC%
 echo.
 
-:: Ollama API prüfen
+:: Ollama API pruefen
 set CHECK_OLLAMA=0
 curl -sf http://localhost:11434/api/tags >nul 2>&1
 if !errorlevel!==0 set CHECK_OLLAMA=1
 
-:: Open WebUI prüfen
+:: Open WebUI pruefen
 set CHECK_WEBUI=0
 curl -sf http://localhost:3000 >nul 2>&1
 if !errorlevel!==0 set CHECK_WEBUI=1
 
-:: Chatbox prüfen
+:: Chatbox pruefen
 set CHECK_CHATBOX=0
 if exist "%LOCALAPPDATA%\Programs\Chatbox AI\Chatbox AI.exe" set CHECK_CHATBOX=1
 
-:: Chatbox-Konfiguration prüfen
+:: Chatbox-Konfiguration pruefen
 set CHECK_CONFIG=0
 if exist "%APPDATA%\Chatbox AI\data\settings.json" (
     powershell -Command "if ((Get-Content '%APPDATA%\Chatbox AI\data\settings.json' -Raw) -match 'localhost:11434') { exit 0 } else { exit 1 }" >nul 2>&1
     if !errorlevel!==0 set CHECK_CONFIG=1
 )
 
-:: Desktop-Verknüpfungen prüfen
+:: Desktop-Verknuepfungen pruefen
 set CHECK_LINKS=0
 if exist "%USERPROFILE%\Desktop\Open WebUI.lnk" set CHECK_LINKS=1
 
@@ -331,37 +331,37 @@ echo  %GRN%============================================================%NC%
 echo.
 
 if !CHECK_OLLAMA!==1 (
-    echo   %GRN%[✓]%NC% Ollama API läuft        → http://localhost:11434
+    echo   %GRN%[OK]%NC% Ollama API laeuft       -^> http://localhost:11434
 ) else (
-    echo   %RED%[✗]%NC% Ollama API NICHT erreichbar
-    echo       Prüfe mit: docker compose logs ollama
+    echo   %RED%[XX]%NC% Ollama API NICHT erreichbar
+    echo       Pruefe mit: docker compose logs ollama
 )
 
 if !CHECK_WEBUI!==1 (
-    echo   %GRN%[✓]%NC% Open WebUI läuft        → http://localhost:3000
+    echo   %GRN%[OK]%NC% Open WebUI laeuft       -^> http://localhost:3000
 ) else (
-    echo   %RED%[✗]%NC% Open WebUI NICHT erreichbar
-    echo       Prüfe mit: docker compose logs open-webui
+    echo   %RED%[XX]%NC% Open WebUI NICHT erreichbar
+    echo       Pruefe mit: docker compose logs open-webui
 )
 
 if !CHECK_CHATBOX!==1 (
-    echo   %GRN%[✓]%NC% Chatbox AI installiert
+    echo   %GRN%[OK]%NC% Chatbox AI installiert
 ) else (
-    echo   %YLW%[!]%NC% Chatbox AI nicht gefunden → manuell: https://chatboxai.app/
+    echo   %YLW%[!!]%NC% Chatbox AI nicht gefunden -^> manuell: https://chatboxai.app/
 )
 
 if !CHECK_CONFIG!==1 (
-    echo   %GRN%[✓]%NC% Chatbox mit Ollama verbunden (localhost:11434)
+    echo   %GRN%[OK]%NC% Chatbox mit Ollama verbunden (localhost:11434)
 ) else (
-    echo   %YLW%[!]%NC% Chatbox-Konfiguration fehlt
-    echo       Manuell: Chatbox → Einstellungen → AI Provider → Ollama
+    echo   %YLW%[!!]%NC% Chatbox-Konfiguration fehlt
+    echo       Manuell: Chatbox -^> Einstellungen -^> AI Provider -^> Ollama
     echo       Ollama Host: http://localhost:11434
 )
 
 if !CHECK_LINKS!==1 (
-    echo   %GRN%[✓]%NC% Desktop-Verknüpfungen erstellt
+    echo   %GRN%[OK]%NC% Desktop-Verknuepfungen erstellt
 ) else (
-    echo   %YLW%[!]%NC% Desktop-Verknüpfungen fehlen
+    echo   %YLW%[!!]%NC% Desktop-Verknuepfungen fehlen
 )
 
 echo.
@@ -369,18 +369,18 @@ echo.
 :: Gesamtstatus
 set /a TOTAL=CHECK_OLLAMA+CHECK_WEBUI+CHECK_CHATBOX+CHECK_CONFIG+CHECK_LINKS
 if !TOTAL!==5 (
-    echo   %GRN%► Alles erfolgreich! Setup vollständig abgeschlossen.%NC%
+    echo   %GRN%^>^> Alles erfolgreich! Setup vollstaendig abgeschlossen.%NC%
 ) else if !TOTAL! geq 3 (
-    echo   %YLW%► Teilweise erfolgreich ^(!TOTAL!/5^). Siehe Hinweise oben.%NC%
+    echo   %YLW%^>^> Teilweise erfolgreich ^(!TOTAL!/5^). Siehe Hinweise oben.%NC%
 ) else (
-    echo   %RED%► Fehler aufgetreten ^(!TOTAL!/5^). Bitte Hinweise oben beachten.%NC%
+    echo   %RED%^>^> Fehler aufgetreten ^(!TOTAL!/5^). Bitte Hinweise oben beachten.%NC%
 )
 
 echo.
 echo   %CYN%Erste Schritte:%NC%
-echo    1. http://localhost:3000 öffnen
+echo    1. http://localhost:3000 oeffnen
 echo    2. Account registrieren (erster Account = Admin)
-echo    3. Chatbox AI starten → direkt mit Ollama verbunden
+echo    3. Chatbox AI starten -^> direkt mit Ollama verbunden
 echo.
 echo   %CYN%Stack steuern:%NC%
 echo    Starten:  start.bat
@@ -390,7 +390,7 @@ echo.
 echo  %GRN%============================================================%NC%
 echo.
 
-set /p _BROWSER="  Open WebUI im Browser öffnen? (J/N): "
+set /p _BROWSER="  Open WebUI im Browser oeffnen? (J/N): "
 if /i "!_BROWSER!"=="J" start http://localhost:3000
 
 :: Chatbox starten falls installiert
