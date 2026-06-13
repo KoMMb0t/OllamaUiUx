@@ -60,11 +60,16 @@ if %errorlevel% neq 0 (
 )
 echo  %GRN%[OK]%NC%   Docker Desktop läuft
 
-:: Docker Compose prüfen
-docker compose version >nul 2>&1
-if %errorlevel% neq 0 (
+:: Docker Compose prüfen (v1 und v2 kompatibel)
+docker-compose --version >nul 2>&1
+set COMPOSE_OK=!errorlevel!
+if !COMPOSE_OK! neq 0 (
+    docker compose version >nul 2>&1
+    set COMPOSE_OK=!errorlevel!
+)
+if !COMPOSE_OK! neq 0 (
     echo  %RED%[FEHLER]%NC% Docker Compose nicht gefunden!
-    echo         Bitte Docker Desktop aktualisieren (enthält Compose v2).
+    echo         Bitte Docker Desktop aktualisieren.
     pause & exit /b 1
 )
 echo  %GRN%[OK]%NC%   Docker Compose bereit
